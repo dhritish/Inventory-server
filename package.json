@@ -3,8 +3,12 @@
   "version": "1.0.0",
   "main": "index.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1",
-    "dev": "nodemon src/index.mjs"
+    "start": "node src/index.mjs",
+    "start:worker": "node src/workers/workers.mjs",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "dev": "nodemon src/index.mjs",
+    "dev:worker": "nodemon src/workers/workers.mjs"
   },
   "keywords": [],
   "author": "",
@@ -12,13 +16,26 @@
   "description": "",
   "type": "module",
   "dependencies": {
+    "@google/genai": "^1.46.0",
+    "@huggingface/transformers": "^3.8.1",
+    "@openai/openai": "npm:@jsr/openai__openai@^6.21.0",
+    "@xenova/transformers": "^2.17.2",
     "bcrypt": "^6.0.0",
+    "bullmq": "^5.67.3",
     "cookie-parser": "^1.4.7",
+    "dotenv": "^17.2.3",
     "express": "^5.2.1",
+    "firebase-admin": "^13.7.0",
+    "ioredis": "^5.9.2",
     "jsonwebtoken": "^9.0.3",
-    "mongoose": "^9.1.1"
+    "mongoose": "^9.1.1",
+    "openai": "^6.21.0",
+    "pdfkit": "^0.17.2",
+    "razorpay": "^2.9.6",
+    "zod": "^4.3.6"
   },
   "devDependencies": {
-    "nodemon": "^3.1.11"
+    "nodemon": "^3.1.11",
+    "vitest": "^3.2.4"
   }
 }

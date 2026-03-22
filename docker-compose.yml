@@ -1,0 +1,47 @@
+services:
+  api:
+    build:
+      context: .
+    command: npm run start
+    ports:
+      - '${PORT:-5000}:5000'
+    volumes:
+      - ./secrets:/app/secrets:ro
+    env_file:
+      - .env
+    environment:
+      PORT: 5000
+      REDIS_HOST: redis
+      REDIS_PORT: 6379
+      FIREBASE_SERVICE_ACCOUNT_PATH: /app/secrets/inventory-firebase-adminsdk.json
+    depends_on:
+      - redis
+    restart: unless-stopped
+
+  worker:
+    build:
+      context: .
+    command: npm run start:worker
+    volumes:
+      - ./secrets:/app/secrets:ro
+    env_file:
+      - .env
+    environment:
+      REDIS_HOST: redis
+      REDIS_PORT: 6379
+      FIREBASE_SERVICE_ACCOUNT_PATH: /app/secrets/inventory-firebase-adminsdk.json
+    depends_on:
+      - redis
+    restart: unless-stopped
+
+  redis:
+    image: redis:8-alpine
+    command: redis-server --appendonly yes --appendfsync everysec
+    volumes:
+      - redis-data:/data
+    ports:
+      - '6379:6379'
+    restart: unless-stopped
+
+volumes:
+  redis-data:

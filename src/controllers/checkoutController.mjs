@@ -1,0 +1,68 @@
+import Razorpay from 'razorpay';
+import * as checkoutServices from '../services/checkoutServices.mjs';
+import { z } from 'zod';
+
+const instance = new Razorpay({
+  key_id: process.env.RAZORPAY_KEY_ID,
+  key_secret: process.env.RAZORPAY_KEY_SECRET,
+});
+
+const addIndividualItemTransactionsSchema = z.object({
+  user: z.string(),
+  body: z.object({
+    data: z.array(
+      z.object({
+        _id: z.string(),
+        barcode: z.string().optional(),
+        name: z.string(),
+        price: z.number(),
+        expire: z.string().datetime({ offset: true }).nullable().optional(),
+        quantity: z.number(),
+        category: z.string(),
+      }),
+    ),
+    total: z.number(),
+  }),
+});
+
+export const digitalCheckout = async (request, response) => {
+  const { body, user } = request;
+  console.log(body);
+  const result = addIndividualItemTransactionsSchema.safeParse({ user, body });
+  console.log(result);
+  if (!result.success) {
+    return response.status(400).json({ success: false, error: result.error });
+  }
+  const { data, total } = body;
+  // const qrcode = await instance.qrCode.create({
+  //   type: 'upi_qr',
+  //   name: 'Store_1',
+  //   usage: 'single_use',
+  //   fixed_amount: true,
+  //   payment_amount: total * 100,
+  //   description: 'For Store 1',
+  //   notes: {
+  //     purpose: 'Test UPI QR code notes',
+  //   },
+  // });
+  // console.log(qrcode);
+
+  const qrcode = await instance.orders.create({
+    amount: total * 100,
+    currency: 'INR',
+    receipt: 'receipt#1',
+  });
+  await checkoutServices.digitalCheckout(data, total, qrcode, user);
+  return response.status(200).json({ success: true, qrcode });
+};
+
+export const cashCheckout = async (request, response) => {
+  const { body, user } = request;
+  const result = addIndividualItemTransactionsSchema.safeParse({ user, body });
+  if (!result.success) {
+    return response.status(400).json({ success: false, error: result.error });
+  }
+  const { data, total } = body;
+  await checkoutServices.cashCheckout(data, total, user);
+  return response.status(200).json({ success: true });
+};
