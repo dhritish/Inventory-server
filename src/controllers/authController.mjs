@@ -39,22 +39,31 @@ export const signin = async (request, response) => {
 };
 
 export const signout = async (request, response) => {
-  const auth = request.headers.authorization;
-  const token = auth && auth.split(' ')[1];
+  const { token } = request;
+  if (!token) {
+    return response
+      .status(401)
+      .json({ success: false, error: 'Token missing' });
+  }
   await authServices.signout(token);
   return response.status(200).json({ success: true });
 };
 
 export const refresh = async (request, response) => {
-  const auth = request.headers.authorization;
-  const token = auth && auth.split(' ')[1];
-  const user = await authServices.refresh(token);
+  const { token, userId } = request;
+  if (!token) {
+    return response
+      .status(401)
+      .json({ success: false, error: 'Token missing' });
+  }
+  const user = await authServices.refresh(token, userId);
   if (user) {
     return response.status(200).json({ success: true, data: user });
+  } else {
+    return response
+      .status(401)
+      .json({ success: false, error: 'User not found' });
   }
-  return response
-    .status(401)
-    .json({ success: false, error: 'Invalid or expired token' });
 };
 
 export const postDeviceToken = async (request, response) => {

@@ -1,25 +1,8 @@
 import * as jobServices from './jobServices.mjs';
 import mongoose from 'mongoose';
 import { getCategoryWiseTotal, getMonth, getToday } from '../utils/helper.mjs';
-import { GoogleGenAI } from '@google/genai';
 import { promptGenerator } from './helpers.mjs';
-
-let genai;
-
-const getGenAIClient = () => {
-  if (genai) {
-    return genai;
-  }
-
-  if (!process.env.GEMINI_API_KEY) {
-    throw new Error(
-      'GEMINI_API_KEY is required to categorize inventory items.',
-    );
-  }
-
-  genai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
-  return genai;
-};
+import { getGenAIClient } from '../config/genai.mjs';
 
 export const digitalCheckout = async data => {
   const session = await mongoose.startSession();

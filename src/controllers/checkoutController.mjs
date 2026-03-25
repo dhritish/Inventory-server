@@ -1,11 +1,6 @@
-import Razorpay from 'razorpay';
 import * as checkoutServices from '../services/checkoutServices.mjs';
 import { z } from 'zod';
-
-const instance = new Razorpay({
-  key_id: process.env.RAZORPAY_KEY_ID,
-  key_secret: process.env.RAZORPAY_KEY_SECRET,
-});
+import { razorpayInstance } from '../config/razorpay.mjs';
 
 const addIndividualItemTransactionsSchema = z.object({
   user: z.string(),
@@ -27,9 +22,7 @@ const addIndividualItemTransactionsSchema = z.object({
 
 export const digitalCheckout = async (request, response) => {
   const { body, user } = request;
-  console.log(body);
   const result = addIndividualItemTransactionsSchema.safeParse({ user, body });
-  console.log(result);
   if (!result.success) {
     return response.status(400).json({ success: false, error: result.error });
   }
@@ -47,7 +40,7 @@ export const digitalCheckout = async (request, response) => {
   // });
   // console.log(qrcode);
 
-  const qrcode = await instance.orders.create({
+  const qrcode = await razorpayInstance.orders.create({
     amount: total * 100,
     currency: 'INR',
     receipt: 'receipt#1',

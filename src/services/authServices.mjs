@@ -3,7 +3,6 @@ import {
   generate_refresh_token,
 } from '../middleware/auth_middleware.mjs';
 import * as authModels from '../models/authModels.mjs';
-import jwt from 'jsonwebtoken';
 
 export const signup = body => {
   const newuser = new authModels.User(body);
@@ -33,20 +32,14 @@ export const signout = token => {
   );
 };
 
-export const refresh = async token => {
-  const userToken = await authModels.UserToken.findOneAndUpdate(
+export const refresh = async (token, userId) => {
+  await authModels.UserToken.findOneAndUpdate(
     { token: token },
     { $set: { revoked: true } },
     { runValidators: true },
   );
-  if (!userToken || userToken.revoked) {
-    return;
-  }
-  if (userToken.expiresAt < new Date() || userToken.revoked === true) {
-    return;
-  }
-  const decoded = jwt.decode(token);
-  const user = await authModels.User.findById(decoded.id);
+
+  const user = await authModels.User.findById(userId);
   if (!user) {
     return;
   }

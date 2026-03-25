@@ -15,7 +15,7 @@ const getItemNameSchema = z.object({
 });
 
 const getSearchedItemSchema = z.object({
-  name: z.string(),
+  name: z.string().trim().min(1),
 });
 
 export const addItem = async (request, response) => {
@@ -57,8 +57,12 @@ export const getSearchedItem = async (request, response) => {
     return response.status(400).json({ success: false, error: result.error });
   }
   const emb = await getEmbedding(query.name);
+  if (emb.data.length === 0) {
+    return response
+      .status(400)
+      .json({ success: false, error: 'Embedding not found' });
+  }
   const embedding = [...emb.data];
   const searchedItemList = await inventoryServices.getSearchedItem(embedding);
-  console.log(searchedItemList);
   return response.status(200).json({ success: true, searchedItemList });
 };

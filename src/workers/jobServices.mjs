@@ -2,22 +2,8 @@ import * as checkoutModels from '../models/checkoutModels.mjs';
 import * as inventoryModels from '../models/inventoryModels.mjs';
 import * as analyticsModels from '../models/analyticsModels.mjs';
 import * as authModels from '../models/authModels.mjs';
-import admin from 'firebase-admin';
-import fs from 'fs';
 import { pipeline } from '@xenova/transformers';
-
-const initializeFirebase = () => {
-  if (admin.apps.length > 0) {
-    return;
-  }
-  const serviceAccountPath = process.env.FIREBASE_SERVICE_ACCOUNT_PATH;
-  const fileContent = fs.readFileSync(serviceAccountPath, 'utf8');
-  const serviceAccount = JSON.parse(fileContent);
-
-  admin.initializeApp({
-    credential: admin.credential.cert(serviceAccount),
-  });
-};
+import { getFirebaseAdmin } from '../config/firebase.mjs';
 
 export const addIndividualItemTransaction = (data, session) => {
   const docs = data.map(({ _id, ...itemdata }) => itemdata);
@@ -156,7 +142,7 @@ export const getDeviceToken = user => {
 };
 
 export const sendNotification = async (qr_id, status, total) => {
-  initializeFirebase();
+  const admin = getFirebaseAdmin();
 
   const user = await getUserFromIndividualItemTransaction(qr_id);
   if (!user) {

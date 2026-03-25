@@ -1,6 +1,7 @@
 import bcrypt from 'bcrypt';
 import jwt from 'jsonwebtoken';
-import { User } from '../models/authModels.mjs';
+import { User, UserToken } from '../models/authModels.mjs';
+import { z } from 'zod';
 
 const saltRounds = process.env.SALT_ROUND;
 
@@ -16,21 +17,19 @@ const signinSchema = z.object({
   password: z.string().min(6),
 });
 
+const getRefreshToken = token => {
+  return UserToken.findOne({ token: token });
+};
+
 export const hashPassword = async (request, response, next) => {
   const result = signupSchema.safeParse(request.body);
   if (!result.success) {
     return response.status(400).json({ success: false, error: result.error });
   }
-  try {
-    const { password } = request.body;
-    const hash = await bcrypt.hash(password, saltRounds);
-    request.body.password = hash;
-    next();
-  } catch (error) {
-    response
-      .status(500)
-      .json({ success: false, error: 'Error hashing password' });
-  }
+  const { password } = request.body;
+  const hash = await bcrypt.hash(password, Number(saltRounds || 10));
+  request.body.password = hash;
+  next();
 };
 
 export const comparePassword = async (request, response, next) => {
@@ -38,28 +37,22 @@ export const comparePassword = async (request, response, next) => {
   if (!result.success) {
     return response.status(400).json({ success: false, error: result.error });
   }
-  try {
-    const { password, email } = request.body;
-    const user = await User.findOne({ email });
-    console.log(user);
-    if (!user) {
-      return response
-        .status(401)
-        .json({ success: false, error: 'User not found' });
-    }
-    request.user = user;
-    const match = await bcrypt.compare(password, user.password);
-    if (!match) {
-      return response
-        .status(401)
-        .json({ success: false, error: 'Wrong password' });
-    }
-    next();
-  } catch (error) {
-    response
-      .status(500)
-      .json({ success: false, error: 'error comparing passwords' });
+
+  const { password, email } = request.body;
+  const user = await User.findOne({ email });
+  if (!user) {
+    return response
+      .status(401)
+      .json({ success: false, error: 'User not found' });
   }
+  request.user = user;
+  const match = await bcrypt.compare(password, user.password);
+  if (!match) {
+    return response
+      .status(401)
+      .json({ success: false, error: 'Wrong password' });
+  }
+  next();
 };
 
 export const generate_access_token = user => {
@@ -74,7 +67,7 @@ export const generate_access_token = user => {
     );
     return token;
   } catch (error) {
-    console.log(error);
+    throw error;
   }
 };
 
@@ -86,7 +79,7 @@ export const generate_refresh_token = user => {
     });
     return token;
   } catch (error) {
-    console.log(error);
+    throw error;
   }
 };
 
@@ -97,61 +90,37 @@ export const verifytoken_access = (request, response, next) => {
     if (!token) {
       return response
         .status(401)
-        .json({ success: false, error: 'user not authenticated' });
+        .json({ success: false, error: 'Token missing' });
     }
     const verified = jwt.verify(token, process.env.ACCESS_TOKEN_SECRET);
-    if (verified) {
-      const decoded = jwt.decode(token);
-      request.user = decoded.id;
-      next();
-    } else {
-      return response
-        .status(401)
-        .json({ success: false, error: 'user not authenticated' });
-    }
+    request.user = verified.id;
+    next();
   } catch (error) {
-    if (
-      error.name === 'JsonWebTokenError' ||
-      error.name === 'TokenExpiredError'
-    ) {
-      return response
-        .status(401)
-        .json({ success: false, error: 'Invalid or expired token' });
-    }
-    return response
-      .status(500)
-      .json({ success: false, error: 'error verifying token' });
+    return response.status(401).json({ success: false, error: error.name });
   }
 };
 
-export const verifytoken_refresh = (request, response, next) => {
+export const verifytoken_refresh = async (request, response, next) => {
   try {
     const authHeader = request.headers.authorization;
     const token = authHeader && authHeader.split(' ')[1];
     if (!token) {
       return response
         .status(401)
-        .json({ success: false, error: 'user not authenticated' });
+        .json({ success: false, error: 'Token missing' });
     }
+    request.token = token;
     const verified = jwt.verify(token, process.env.REFRESH_TOKEN_SECRET);
-    if (verified) {
+    request.userId = verified.id;
+    const refreshTokenInformation = await getRefreshToken(token);
+    if (refreshTokenInformation && !refreshTokenInformation.revoked) {
       next();
     } else {
       return response
         .status(401)
-        .json({ success: false, error: 'user not authenticated' });
+        .json({ success: false, error: 'Invalid token' });
     }
   } catch (error) {
-    if (
-      error.name === 'JsonWebTokenError' ||
-      error.name === 'TokenExpiredError'
-    ) {
-      return response
-        .status(401)
-        .json({ success: false, error: 'Invalid or expired token' });
-    }
-    return response
-      .status(500)
-      .json({ success: false, error: 'error verifying token' });
+    return response.status(401).json({ success: false, error: error.name });
   }
 };

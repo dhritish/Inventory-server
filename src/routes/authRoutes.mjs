@@ -11,7 +11,7 @@ const router = express.Router();
 
 router.post('/signup', hashPassword, authController.signup);
 router.post('/signin', comparePassword, authController.signin);
-router.post('/signout', verifytoken_access, authController.signout);
+router.post('/signout', verifytoken_refresh, authController.signout);
 router.post('/refresh', verifytoken_refresh, authController.refresh);
 router.post(
   '/postDeviceToken',
