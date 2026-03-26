@@ -1,14 +1,15 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 const queueMocks = vi.hoisted(() => ({
-  add: vi.fn(),
+  queue: {
+    add: vi.fn(),
+  },
 }));
 
-vi.mock('../../src/queue.mjs', () => ({
-  queue: queueMocks,
-}));
+vi.mock('../../src/queue.mjs', () => queueMocks);
 
-const checkoutServices = await import('../../src/services/checkoutServices.mjs');
+const checkoutServices =
+  await import('../../src/services/checkoutServices.mjs');
 
 describe('checkoutServices', () => {
   beforeEach(() => {
@@ -28,8 +29,8 @@ describe('checkoutServices', () => {
 
     await checkoutServices.cashCheckout(items, 60, 'user-1');
 
-    expect(queueMocks.add).toHaveBeenCalledTimes(1);
-    const [jobName, payload, options] = queueMocks.add.mock.calls[0];
+    expect(queueMocks.queue.add).toHaveBeenCalledTimes(1);
+    const [jobName, payload, options] = queueMocks.queue.add.mock.calls[0];
 
     expect(jobName).toBe('cash');
     expect(payload.total).toBe(60);
@@ -67,8 +68,8 @@ describe('checkoutServices', () => {
       'user-2',
     );
 
-    expect(queueMocks.add).toHaveBeenCalledTimes(1);
-    const [jobName, payload] = queueMocks.add.mock.calls[0];
+    expect(queueMocks.queue.add).toHaveBeenCalledTimes(1);
+    const [jobName, payload, options] = queueMocks.queue.add.mock.calls[0];
 
     expect(jobName).toBe('digital');
     expect(payload.total).toBe(50);
@@ -78,5 +79,9 @@ describe('checkoutServices', () => {
       user: 'user-2',
     });
     expect(payload.data[0].sold_date).toBeInstanceOf(Date);
+    expect(options).toMatchObject({
+      attempts: 5,
+      backoff: { type: 'exponential', delay: 5000 },
+    });
   });
 });

@@ -5,8 +5,7 @@ import {
 import * as authModels from '../models/authModels.mjs';
 
 export const signup = body => {
-  const newuser = new authModels.User(body);
-  return newuser.save();
+  return authModels.User.create(body);
 };
 
 export const signin = async user => {
@@ -19,8 +18,7 @@ export const signin = async user => {
     user: user._id,
     expiresAt: date,
   };
-  const new_refresh_token = new authModels.UserToken(token_data);
-  await new_refresh_token.save();
+  await authModels.UserToken.create(token_data);
   return { access_token, refresh_token };
 };
 
@@ -52,8 +50,7 @@ export const refresh = async (token, userId) => {
     user: user._id,
     expiresAt: date,
   };
-  const new_tokend_data = new authModels.UserToken(token_data);
-  await new_tokend_data.save();
+  await authModels.UserToken.create(token_data);
   return { access_token, refresh_token };
 };
 
