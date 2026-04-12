@@ -9,7 +9,7 @@ const queueMocks = vi.hoisted(() => ({
 vi.mock('../../src/queue.mjs', () => queueMocks);
 
 const checkoutServices =
-  await import('../../src/services/checkoutServices.mjs');
+  await import('../../src/checkout/checkoutServices.mjs');
 
 describe('checkoutServices', () => {
   beforeEach(() => {

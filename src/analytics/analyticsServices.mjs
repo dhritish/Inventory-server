@@ -1,4 +1,5 @@
-import * as analyticsSchema from '../models/analyticsModels.mjs';
+import * as analyticsSchema from './analyticsModels.mjs';
+import { queue } from '../queue.mjs';
 
 export const getRecentTransactions = (limit, skip) => {
   return analyticsSchema.Transactions.find()
@@ -51,4 +52,18 @@ export const getCategoryWiseDailySales = category => {
   })
     .select('total')
     .lean();
+};
+
+export const getReport = async () => {
+  return queue.add(
+    'report',
+    {},
+    {
+      attempts: 5,
+      backoff: {
+        type: 'exponential',
+        delay: 1000,
+      },
+    },
+  );
 };

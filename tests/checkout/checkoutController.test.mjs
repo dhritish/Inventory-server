@@ -8,18 +8,18 @@ const checkoutServiceMocks = vi.hoisted(() => ({
 
 const razorpayMocks = vi.hoisted(() => ({
   razorpayInstance: {
-    orders: {
+    qrCode: {
       create: vi.fn(),
     },
   },
 }));
 
-vi.mock('../../src/services/checkoutServices.mjs', () => checkoutServiceMocks);
+vi.mock('../../src/checkout/checkoutServices.mjs', () => checkoutServiceMocks);
 
 vi.mock('../../src/config/razorpay.mjs', () => razorpayMocks);
 
 const checkoutController =
-  await import('../../src/controllers/checkoutController.mjs');
+  await import('../../src/checkout/checkoutController.mjs');
 
 describe('checkoutController', () => {
   beforeEach(() => {
@@ -33,7 +33,7 @@ describe('checkoutController', () => {
       currency: 'INR',
       receipt: 'receipt#1',
     };
-    razorpayMocks.razorpayInstance.orders.create.mockResolvedValue(qrcode);
+    razorpayMocks.razorpayInstance.qrCode.create.mockResolvedValue(qrcode);
     checkoutServiceMocks.digitalCheckout.mockResolvedValue();
     const request = {
       user: 'user-1',
@@ -54,10 +54,16 @@ describe('checkoutController', () => {
     };
     const response = createResponse();
     await checkoutController.digitalCheckout(request, response);
-    expect(razorpayMocks.razorpayInstance.orders.create).toHaveBeenCalledWith({
-      amount: 50 * 100,
-      currency: 'INR',
-      receipt: 'receipt#1',
+    expect(razorpayMocks.razorpayInstance.qrCode.create).toHaveBeenCalledWith({
+      type: 'upi_qr',
+      name: 'Store_1',
+      usage: 'single_use',
+      fixed_amount: true,
+      payment_amount: 50 * 100,
+      description: 'For Store 1',
+      notes: {
+        purpose: 'Test UPI QR code notes',
+      },
     });
     expect(checkoutServiceMocks.digitalCheckout).toHaveBeenCalledWith(
       request.body.data,
@@ -83,7 +89,7 @@ describe('checkoutController', () => {
 
     expect(response.statusCode).toBe(400);
     expect(response.payload.success).toBe(false);
-    expect(razorpayMocks.razorpayInstance.orders.create).not.toHaveBeenCalled();
+    expect(razorpayMocks.razorpayInstance.qrCode.create).not.toHaveBeenCalled();
     expect(checkoutServiceMocks.digitalCheckout).not.toHaveBeenCalled();
   });
 

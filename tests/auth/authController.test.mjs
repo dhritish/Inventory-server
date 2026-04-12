@@ -9,9 +9,9 @@ const authServiceMocks = vi.hoisted(() => ({
   postDeviceToken: vi.fn(),
 }));
 
-vi.mock('../../src/services/authServices.mjs', () => authServiceMocks);
+vi.mock('../../src/auth/authServices.mjs', () => authServiceMocks);
 
-const authController = await import('../../src/controllers/authController.mjs');
+const authController = await import('../../src/auth/authController.mjs');
 
 describe('authController', () => {
   beforeEach(() => {

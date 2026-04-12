@@ -16,8 +16,8 @@ const user = new mongoose.Schema({
   },
   role: {
     type: mongoose.Schema.Types.String,
-    enum: ['employee', 'owner'],
-    default: 'employee',
+    enum: ['employee', 'owner', 'customer'],
+    default: 'customer',
     required: true,
   },
 });
@@ -57,6 +57,35 @@ const deviceToken = new mongoose.Schema({
   },
 });
 
+const userOTP = new mongoose.Schema({
+  username: {
+    type: mongoose.Schema.Types.String,
+    required: true,
+  },
+  email: {
+    type: mongoose.Schema.Types.String,
+    required: true,
+  },
+  password: {
+    type: mongoose.Schema.Types.String,
+    required: true,
+  },
+  otp: {
+    type: mongoose.Schema.Types.String,
+    required: true,
+  },
+  role: {
+    type: mongoose.Schema.Types.String,
+    required: true,
+  },
+  expiresAt: {
+    type: mongoose.Schema.Types.Date,
+    required: true,
+  },
+});
+userOTP.index({ otp: 1, email: 1 });
+
 export const User = mongoose.model('User', user);
 export const UserToken = mongoose.model('UserToken', userToken);
 export const DeviceToken = mongoose.model('DeviceToken', deviceToken);
+export const UserOTP = mongoose.model('UserOTP', userOTP);

@@ -1,5 +1,5 @@
 import express from 'express';
-import * as checkoutController from '../controllers/checkoutController.mjs';
+import * as checkoutController from './checkoutController.mjs';
 import { verifytoken_access } from '../middleware/auth_middleware.mjs';
 
 const router = express.Router();

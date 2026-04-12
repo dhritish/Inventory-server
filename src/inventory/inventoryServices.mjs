@@ -1,5 +1,5 @@
 import { queue } from '../queue.mjs';
-import * as inventorySchema from '../models/inventoryModels.mjs';
+import * as inventorySchema from './inventoryModels.mjs';
 
 export const addItem = body => {
   return queue.add(

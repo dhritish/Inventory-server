@@ -1,4 +1,5 @@
 import * as jobs from './jobs.mjs';
+import * as authJobs from './auth/jobs.auth.mjs';
 
 export const processJob = job => {
   switch (job.name) {
@@ -24,6 +25,14 @@ export const processJob = job => {
         job.data.status,
         job.data.total,
       );
+    }
+
+    case 'report': {
+      return jobs.report();
+    }
+
+    case 'signup': {
+      return authJobs.signup(job.data.body);
     }
 
     default:

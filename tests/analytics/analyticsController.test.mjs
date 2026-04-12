@@ -11,12 +11,12 @@ const analyticsServicesMocks = vi.hoisted(() => ({
 }));
 
 vi.mock(
-  '../../src/services/analyticsServices.mjs',
+  '../../src/analytics/analyticsServices.mjs',
   () => analyticsServicesMocks,
 );
 
 const analyticsController =
-  await import('../../src/controllers/analyticsController.mjs');
+  await import('../../src/analytics/analyticsController.mjs');
 
 describe('analytics controller', () => {
   beforeEach(() => {

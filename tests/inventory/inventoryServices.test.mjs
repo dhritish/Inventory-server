@@ -18,13 +18,13 @@ vi.mock('../../src/queue.mjs', () => ({
   queue: queueMocks,
 }));
 
-vi.mock('../../src/models/inventoryModels.mjs', () => ({
+vi.mock('../../src/inventory/inventoryModels.mjs', () => ({
   TotalOfItems: dbMocks.TotalOfItems,
   ItemsWithExpire: dbMocks.ItemsWithExpire,
 }));
 
 const inventoryServices =
-  await import('../../src/services/inventoryServices.mjs');
+  await import('../../src/inventory/inventoryServices.mjs');
 
 describe('inventoryServices', () => {
   beforeEach(() => {

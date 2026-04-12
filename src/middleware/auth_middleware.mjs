@@ -1,7 +1,8 @@
 import bcrypt from 'bcrypt';
 import jwt from 'jsonwebtoken';
-import { User, UserToken } from '../models/authModels.mjs';
+import { User, UserToken } from '../auth/authModels.mjs';
 import { z } from 'zod';
+import crypto from 'crypto';
 
 const saltRounds = process.env.SALT_ROUND;
 
@@ -9,7 +10,8 @@ const signupSchema = z.object({
   username: z.string(),
   email: z.string().email(),
   password: z.string().min(6),
-  role: z.enum(['employee', 'owner']).optional(),
+  role: z.enum(['employee', 'owner', 'customer']),
+  otp: z.string().optional(),
 });
 
 const signinSchema = z.object({
@@ -17,8 +19,18 @@ const signinSchema = z.object({
   password: z.string().min(6),
 });
 
+const hashRefreshToken = token => {
+  const cryptoSecret = process.env.CRYPTO_SECRET;
+  if (!cryptoSecret) {
+    throw new Error('CRYPTO_SECRET is required for refresh token hashing');
+  }
+
+  return crypto.createHmac('sha256', cryptoSecret).update(token).digest('hex');
+};
+
 const getRefreshToken = token => {
-  return UserToken.findOne({ token: token });
+  const hashed_token = hashRefreshToken(token);
+  return UserToken.findOne({ token: hashed_token });
 };
 
 export const hashPassword = async (request, response, next) => {
@@ -102,8 +114,14 @@ export const verifytoken_access = (request, response, next) => {
 
 export const verifytoken_refresh = async (request, response, next) => {
   try {
-    const authHeader = request.headers.authorization;
-    const token = authHeader && authHeader.split(' ')[1];
+    let token;
+    const isWeb = request.headers?.['client-type'] === 'web';
+    if (isWeb) {
+      token = request.cookies?.refresh_token;
+    } else {
+      const authHeader = request.headers?.authorization;
+      token = authHeader && authHeader.split(' ')[1];
+    }
     if (!token) {
       return response
         .status(401)
@@ -113,7 +131,11 @@ export const verifytoken_refresh = async (request, response, next) => {
     const verified = jwt.verify(token, process.env.REFRESH_TOKEN_SECRET);
     request.userId = verified.id;
     const refreshTokenInformation = await getRefreshToken(token);
-    if (refreshTokenInformation && !refreshTokenInformation.revoked) {
+    if (
+      refreshTokenInformation &&
+      !refreshTokenInformation.revoked &&
+      refreshTokenInformation.expiresAt > new Date()
+    ) {
       next();
     } else {
       return response

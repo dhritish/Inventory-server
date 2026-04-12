@@ -1,12 +1,12 @@
 import 'dotenv/config';
 import express from 'express';
-import authRoutes from './routes/authRoutes.mjs';
-import inventoryRoutes from './routes/inventoryRoutes.mjs';
-import analyticsRoutes from './routes/analyticsRoutes.mjs';
-import checkoutRoutes from './routes/checkoutRoutes.mjs';
+import authRoutes from './auth/authRoutes.mjs';
+import inventoryRoutes from './inventory/inventoryRoutes.mjs';
+import analyticsRoutes from './analytics/analyticsRoutes.mjs';
+import checkoutRoutes from './checkout/checkoutRoutes.mjs';
 import mongoose from 'mongoose';
 import cookieParser from 'cookie-parser';
-import webhooksRouter from './routes/webhooks.mjs';
+import webhooksRouter from './checkout/webhooks.mjs';
 import { fileURLToPath } from 'url';
 import { errorHandler } from './middleware/errorHandler.mjs';
 
@@ -18,6 +18,17 @@ app.use('/razor', webhooksRouter);
 
 app.use(express.json());
 app.use(cookieParser());
+
+import cors from 'cors';
+
+app.use(
+  cors({
+    origin: 'http://localhost:5173',
+    methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+    allowedHeaders: ['Content-Type', 'Authorization', 'Client-Type'],
+    credentials: true,
+  }),
+);
 
 app.use('/auth', authRoutes);
 app.use('/inventory', inventoryRoutes);

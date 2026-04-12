@@ -1,4 +1,5 @@
-import * as jobServices from './jobServices.mjs';
+import * as jobServicesGet from './jobServices.get.mjs';
+import * as jobServicesUpdate from './jobServices.update.mjs';
 import mongoose from 'mongoose';
 import { getCategoryWiseTotal, getMonth, getToday } from '../utils/helper.mjs';
 import { promptGenerator } from './helpers.mjs';
@@ -8,7 +9,7 @@ export const digitalCheckout = async data => {
   const session = await mongoose.startSession();
   try {
     session.startTransaction();
-    await jobServices.addIndividualItemTransaction(data, session);
+    await jobServicesUpdate.addIndividualItemTransaction(data, session);
     await session.commitTransaction();
   } catch (error) {
     await session.abortTransaction();
@@ -26,23 +27,27 @@ export const cashCheckout = async (data, total) => {
   const session = await mongoose.startSession();
   try {
     session.startTransaction();
-    await jobServices.addIndividualItemTransaction(data, session);
-    await jobServices.addTransaction(date, total, session);
-    await jobServices.updateMonthlySales(month, total, session);
-    await jobServices.updateDailySales(today, total, session);
-    await jobServices.updateCategoryWiseDailySales(
+    await jobServicesUpdate.addIndividualItemTransaction(data, session);
+    await jobServicesUpdate.addTransaction(date, total, session);
+    await jobServicesUpdate.updateMonthlySales(month, total, session);
+    await jobServicesUpdate.updateDailySales(today, total, session);
+    await jobServicesUpdate.updateCategoryWiseDailySales(
       categoryWiseTotal,
       today,
       session,
     );
-    await jobServices.updateCategoryWiseMonthlySales(
+    await jobServicesUpdate.updateCategoryWiseMonthlySales(
       categoryWiseTotal,
       month,
       session,
     );
-    await jobServices.updateItemsWithExpire(data, session);
-    await jobServices.updateTotalOfItems(data, session);
-    await jobServices.updateIndividualItemMonthlySales(data, month, session);
+    await jobServicesUpdate.updateItemsWithExpire(data, session);
+    await jobServicesUpdate.updateTotalOfItems(data, session);
+    await jobServicesUpdate.updateIndividualItemMonthlySales(
+      data,
+      month,
+      session,
+    );
 
     await session.commitTransaction();
   } catch (error) {
@@ -59,7 +64,7 @@ export const updateQrId = async (qr_id, status, total) => {
   try {
     session.startTransaction();
     if (status === 'success') {
-      const data = await jobServices.getIndividualItemTransaction(
+      const data = await jobServicesGet.getIndividualItemTransaction(
         qr_id,
         session,
       );
@@ -71,25 +76,37 @@ export const updateQrId = async (qr_id, status, total) => {
       const month = getMonth(date);
       const today = getToday(date);
       const categoryWiseTotal = getCategoryWiseTotal(data);
-      await jobServices.updateIndividualItemTransaction(qr_id, status, session);
-      await jobServices.addTransaction(date, total, session);
-      await jobServices.updateMonthlySales(month, total, session);
-      await jobServices.updateDailySales(today, total, session);
-      await jobServices.updateCategoryWiseDailySales(
+      await jobServicesUpdate.updateIndividualItemTransaction(
+        qr_id,
+        status,
+        session,
+      );
+      await jobServicesUpdate.addTransaction(date, total, session);
+      await jobServicesUpdate.updateMonthlySales(month, total, session);
+      await jobServicesUpdate.updateDailySales(today, total, session);
+      await jobServicesUpdate.updateCategoryWiseDailySales(
         categoryWiseTotal,
         today,
         session,
       );
-      await jobServices.updateCategoryWiseMonthlySales(
+      await jobServicesUpdate.updateCategoryWiseMonthlySales(
         categoryWiseTotal,
         month,
         session,
       );
-      await jobServices.updateItemsWithExpire(data, session);
-      await jobServices.updateTotalOfItems(data, session);
-      await jobServices.updateIndividualItemMonthlySales(data, month, session);
+      await jobServicesUpdate.updateItemsWithExpire(data, session);
+      await jobServicesUpdate.updateTotalOfItems(data, session);
+      await jobServicesUpdate.updateIndividualItemMonthlySales(
+        data,
+        month,
+        session,
+      );
     } else {
-      await jobServices.updateIndividualItemTransaction(qr_id, status, session);
+      await jobServicesUpdate.updateIndividualItemTransaction(
+        qr_id,
+        status,
+        session,
+      );
     }
     await session.commitTransaction();
   } catch (error) {
@@ -105,12 +122,12 @@ export const addItem = async data => {
   try {
     session.startTransaction();
     const categoryEmbeddingOfItem =
-      await jobServices.getCategoryEmbeddingOfItem(data, session);
+      await jobServicesGet.getCategoryEmbeddingOfItem(data, session);
     if (categoryEmbeddingOfItem) {
       data.category = categoryEmbeddingOfItem.category;
       data.embedding = categoryEmbeddingOfItem.embedding;
     } else {
-      const categories = await jobServices.getCategoryString();
+      const categories = await jobServicesGet.getCategoryString();
       const prompt = promptGenerator(categories, data.name);
       const genaiClient = getGenAIClient();
       const res = await genaiClient.models.generateContent({
@@ -121,16 +138,16 @@ export const addItem = async data => {
       const result = JSON.parse(res.candidates[0].content.parts[0].text);
       console.log(result);
       if (result.newCategorySuggested) {
-        await jobServices.addCategory(result.category, session);
+        await jobServicesUpdate.addCategory(result.category, session);
       }
       data.category = result.category;
-      const emb = await jobServices.getEmbedding(
+      const emb = await jobServicesGet.getEmbedding(
         `${data.name}, category: ${result.category}`,
       );
       data.embedding = [...emb.data];
     }
-    await jobServices.addTotalOfItems(data, session);
-    await jobServices.addItemsWithExpire(data, session);
+    await jobServicesUpdate.addTotalOfItems(data, session);
+    await jobServicesUpdate.addItemsWithExpire(data, session);
     await session.commitTransaction();
   } catch (error) {
     await session.abortTransaction();
@@ -141,5 +158,9 @@ export const addItem = async data => {
 };
 
 export const sendNotification = async (qr_id, status, total) => {
-  await jobServices.sendNotification(qr_id, status, total);
+  await jobServicesGet.sendNotification(qr_id, status, total);
+};
+
+export const report = async () => {
+  await jobServicesGet.getReport();
 };

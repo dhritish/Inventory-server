@@ -17,7 +17,7 @@ const dbMocks = vi.hoisted(() => ({
   generate_refresh_token: vi.fn(),
 }));
 
-vi.mock('../../src/models/authModels.mjs', () => ({
+vi.mock('../../src/auth/authModels.mjs', () => ({
   User: dbMocks.User,
   UserToken: dbMocks.UserToken,
   DeviceToken: dbMocks.DeviceToken,
@@ -28,7 +28,7 @@ vi.mock('../../src/middleware/auth_middleware.mjs', () => ({
   generate_refresh_token: dbMocks.generate_refresh_token,
 }));
 
-const authServices = await import('../../src/services/authServices.mjs');
+const authServices = await import('../../src/auth/authServices.mjs');
 
 describe('authServices', () => {
   beforeEach(() => {

@@ -1,6 +1,6 @@
 import express from 'express';
 import { verifytoken_access } from '../middleware/auth_middleware.mjs';
-import * as analyticsController from '../controllers/analyticsController.mjs';
+import * as analyticsController from './analyticsController.mjs';
 
 const router = express.Router();
 
@@ -24,5 +24,6 @@ router.get(
   verifytoken_access,
   analyticsController.getCategoryWiseSales,
 );
+router.get('/report', verifytoken_access, analyticsController.getReport);
 
 export default router;

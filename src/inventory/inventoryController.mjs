@@ -1,4 +1,4 @@
-import * as inventoryServices from '../services/inventoryServices.mjs';
+import * as inventoryServices from './inventoryServices.mjs';
 import { z } from 'zod';
 import { getEmbedding } from '../workers/jobServices.mjs';
 

@@ -1,98 +1,103 @@
 # Inventory Server
 
-Backend for a retail inventory and checkout system built with Node.js, Express, MongoDB, BullMQ, Redis, Razorpay, and Firebase.
+Production-style backend for a smart retail inventory and checkout system built with Node.js, Express, MongoDB, Redis, BullMQ, Razorpay, Firebase, and semantic search.
 
-This project handles inventory management, cash and digital checkout workflows, background job processing, and sales analytics for a small-store style environment.
+This project goes beyond basic CRUD. It combines real-time inventory handling, asynchronous job processing, digital payments, AI-assisted categorization, and vector-based search into a backend designed for a small-store or POS-style workflow.
 
-## Features
+## Why This Project Stands Out
 
-- JWT authentication with access and refresh tokens
-- Inventory management with barcode and expiry tracking
-- Cash checkout workflow
-- Digital checkout workflow with Razorpay
-- Background processing with BullMQ and Redis
-- Sales analytics by day, month, and category
-- Firebase push notifications for payment updates
-- Request validation with Zod
+- Built a multi-service backend with API, worker, and Redis-based job processing
+- Implemented automatic inventory categorization using stored embeddings with Google GenAI fallback
+- Added semantic product search using text embeddings and MongoDB vector search
+- Supported both cash and online checkout flows with Razorpay webhook handling
+- Designed analytics pipelines for daily, monthly, and category-wise sales tracking
+- Added Firebase device-token support for payment status notifications
+
+## What It Does
+
+The system supports a retail workflow from product intake to checkout and reporting:
+
+- staff can add inventory with quantity, price, barcode, and expiry information
+- products are categorized automatically and stored with embeddings for future reuse
+- checkout supports both cash and online payment flows
+- successful purchases update inventory and analytics through background workers
+- users can retrieve recent transactions, graph data, category insights, and reports
+- inventory can be searched semantically instead of relying only on exact keyword matches
 
 ## Tech Stack
 
-- Node.js
-- Express
+- Node.js 20
+- Express 5
 - MongoDB + Mongoose
-- BullMQ
 - Redis
+- BullMQ
 - Razorpay
 - Firebase Admin SDK
-- Zod
-
-## Project Structure
-
-```text
-src/
-  controllers/   Request validation and response handling
-  middleware/    Authentication and request middleware
-  models/        Mongoose schemas and indexes
-  routes/        Express route definitions
-  services/      Business logic
-  workers/       Queue job processors
-  index.mjs      API entrypoint
-  queue.mjs      BullMQ queue setup
-```
+- Google GenAI SDK
+- Xenova Transformers
+- Nodemailer
+- Vitest
 
 ## Architecture
 
-The backend follows a layered structure:
+The backend follows a layered design:
 
 - `routes` define API endpoints
-- `controllers` validate input and shape responses
-- `services` hold business logic
-- `models` define MongoDB collections
-- `workers` process asynchronous jobs for checkout, inventory updates, and analytics aggregation
+- `controllers` validate requests and shape responses
+- `services` contain business logic
+- `models` manage MongoDB persistence
+- `workers` process asynchronous jobs such as stock updates, payment handling, notifications, categorization, and report generation
 
-This keeps request handling lightweight while moving heavier workflows into background jobs.
+This keeps the API responsive while moving heavier workflows into Redis-backed background processing.
 
-## Core Workflows
+### Key Engineering Highlights
+
+- Inventory categorization is not hardcoded. The worker first tries to reuse an existing category embedding, then falls back to Google GenAI when the item is new.
+- Semantic search is implemented with `Xenova/all-MiniLM-L6-v2` embeddings and MongoDB vector search, allowing item discovery by meaning rather than exact string match.
+- Digital checkout uses Razorpay order creation plus webhook verification so payment state changes can safely trigger downstream updates.
+- Analytics data is incrementally updated during checkout flows for daily, monthly, and category-level reporting.
+
+## Core Features
 
 ### Authentication
 
-- Users sign up with email and password
-- Passwords are hashed with bcrypt
-- Signin returns access and refresh tokens
-- Protected routes use JWT verification middleware
+- JWT-based access and refresh token flow
+- password hashing with bcrypt middleware
+- protected routes for inventory, checkout, and analytics
 
-### Add Inventory
+### Inventory Management
 
-- Authenticated users submit item details
-- Request payload is validated with Zod
-- The API enqueues an inventory job
-- Worker logic updates total stock and expiry-based stock collections
+- add items with barcode, price, quantity, and optional expiry
+- store aggregate and expiry-based stock views
+- automatically categorize items during ingestion
+- reuse stored embeddings for future categorization efficiency
 
-### Cash Checkout
+### Semantic Search
 
-- User submits purchased items and total amount
-- Checkout data is added to the queue
-- Worker logic reduces stock, stores transaction data, and updates analytics
+- accepts free-text item search queries
+- generates embeddings for the query
+- uses MongoDB vector search to return similar in-stock items
 
-### Digital Checkout
+### Checkout
 
-- Razorpay order is created for the purchase
-- Individual item transaction records are stored
-- Payment status is updated through the webhook flow
-- Successful payments update inventory and analytics
-- Firebase notifications can be sent back to the user device
+- cash checkout flow
+- digital checkout flow with Razorpay
+- webhook-based payment confirmation
+- worker-driven stock and analytics updates after payment success
 
-### Analytics
+### Analytics and Reporting
 
-The backend stores and serves:
+- recent transactions endpoint
+- daily and monthly sales summaries
+- category-wise sales tracking
+- background report generation
 
-- recent transactions
-- daily sales
-- monthly sales
-- category-wise daily sales
-- category-wise monthly sales
+### Notifications
 
-## Main API Routes
+- stores Firebase device tokens
+- sends payment status notifications to client devices
+
+## API Routes
 
 ### Auth
 
@@ -107,7 +112,7 @@ The backend stores and serves:
 - `POST /inventory/addItem`
 - `GET /inventory/getItemName`
 - `GET /inventory/getItemInformation`
-- `GET /inventory/getSearchedItem`
+- `GET /inventory/getSearchedItem` for semantic item search
 
 ### Checkout
 
@@ -121,41 +126,91 @@ The backend stores and serves:
 - `GET /analytics/getGraphData`
 - `GET /analytics/getCategories`
 - `GET /analytics/getCategoryWiseSales`
+- `GET /analytics/report`
+
+## Project Structure
+
+```text
+src/
+  config/        Integrations such as Firebase, Razorpay, mailer, and GenAI
+  controllers/   Request validation and response handling
+  middleware/    Auth and error-handling middleware
+  models/        Mongoose models
+  routes/        API route definitions
+  services/      Core business logic
+  workers/       BullMQ workers and job handlers
+  index.mjs      HTTP server entrypoint
+  queue.mjs      Shared BullMQ queue connection
+tests/
+  controllers/   Controller-level tests
+  middleware/    Middleware tests
+  services/      Service-layer tests
+  workers/       Worker job tests
+```
+
+## Requirements
+
+You need these services or credentials available before starting the app:
+
+- MongoDB connection string via `MONGO_URI` or `MONGO_ATLAS_URI`
+- Redis running on the configured host and port
+- JWT secrets for auth
+- Razorpay keys for digital checkout
+- a Firebase service account JSON file if you use push notifications
+
+Optional integrations:
+
+- `SMTP_*` values for mail and report delivery
+- `GEMINI_API_KEY` for automatic categorization when an item cannot be matched to an existing category embedding
 
 ## Environment Variables
 
-Create a `.env` file with:
+Create a `.env` file in the project root.
 
 ```env
+PORT=5000
 MONGO_URI=
+MONGO_ATLAS_URI=
+REDIS_HOST=127.0.0.1
+REDIS_PORT=6379
+
 ACCESS_TOKEN_SECRET=
 REFRESH_TOKEN_SECRET=
+SALT_ROUND=10
+
 RAZORPAY_KEY_ID=
 RAZORPAY_KEY_SECRET=
 RAZORPAY_WEBHOOK_SECRET=
+
 FIREBASE_SERVICE_ACCOUNT_PATH=./secrets/inventory-firebase-adminsdk.json
+
+SMTP_HOST=
+SMTP_PORT=
+SMTP_USER=
+SMTP_PASS=
+
+GEMINI_API_KEY=
 ```
 
-This project also requires:
+Notes:
 
-- a running Redis instance
-- a Firebase service account JSON file
+- set either `MONGO_URI` or `MONGO_ATLAS_URI`
+- keep the Firebase service account file outside version control
+- `secrets/` is a good local place for credentials
 
-Store the Firebase service account outside version control, for example:
+Example:
 
 ```text
 secrets/inventory-firebase-adminsdk.json
 ```
 
-The `secrets/` directory is gitignored, so credentials do not get committed.
+## Run Locally
 
-## Installation
+Install dependencies:
 
 ```bash
 npm install
 ```
-
-## Run the Project
 
 Start the API server:
 
@@ -163,7 +218,7 @@ Start the API server:
 npm run dev
 ```
 
-Start the worker:
+Start the worker in a second terminal:
 
 ```bash
 npm run dev:worker
@@ -175,65 +230,89 @@ Run tests:
 npm test
 ```
 
-## Run With Docker
+Useful scripts:
 
-This repo now includes:
+- `npm run start` starts the API without nodemon
+- `npm run start:worker` starts the worker without nodemon
+- `npm run test:watch` runs Vitest in watch mode
 
-- `Dockerfile` for the Node app image
-- `docker-compose.yml` for the API server, BullMQ worker, and Redis
+## Docker
 
-Before starting, make sure your `.env` has valid values for MongoDB, JWT, Razorpay, and Firebase.
+This repository includes two Compose setups:
 
-If you use Firebase notifications, the service account file also needs to exist at the path referenced by `FIREBASE_SERVICE_ACCOUNT_PATH`.
+- `docker-compose.yml` for a more production-like local run
+- `docker-compose.dev.yml` for development with `nodemon`
 
-Build and start everything:
+Both Compose files start:
+
+- `api`
+- `worker`
+- `redis`
+
+MongoDB is not included in either Compose file, so the app must connect to an external MongoDB instance using `MONGO_URI` or `MONGO_ATLAS_URI`.
+
+### Production-like Compose
 
 ```bash
 docker compose up --build
 ```
 
-Run in the background:
+Background mode:
 
 ```bash
 docker compose up --build -d
 ```
 
-Stop the stack:
+Stop:
 
 ```bash
 docker compose down
 ```
 
-By default:
+Default access:
 
-- API runs on `http://localhost:5000`
-- Redis runs on `localhost:6379`
-- the worker runs as a separate container
+- API: `http://localhost:5000`
+- Redis: `localhost:6379`
 
-The app image uses:
+### Development Compose
 
-- `npm run start` for the API
-- `npm run start:worker` for the worker
+```bash
+docker compose -f docker-compose.dev.yml up --build
+```
 
-The Docker setup expects:
+Background mode:
 
-- `MONGO_ATLAS_URI` or `MONGO_URI`
-- `REDIS_HOST` and `REDIS_PORT` are injected automatically in Compose
+```bash
+docker compose -f docker-compose.dev.yml up --build -d
+```
 
-## Test Strategy
+Stop:
 
-The test setup focuses on the parts that give the best backend signal:
+```bash
+docker compose -f docker-compose.dev.yml down
+```
+
+The development stack uses `Dockerfile.dev`, runs `npm run dev` and `npm run dev:worker`, and mounts `./secrets` into the containers as `/app/secrets`.
+
+## Testing
+
+The Vitest suite focuses on fast backend feedback:
 
 - controller validation and response behavior
-- service-layer queue payload creation
-- business-logic units that can be verified without spinning up the full stack
+- service-layer logic
+- auth middleware behavior
+- worker job logic
 
-The current scaffold uses Vitest and mocks external dependencies so tests stay fast and deterministic.
+Run:
+
+```bash
+npm test
+```
 
 ## Future Improvements
 
-- Add MongoDB transactions for checkout consistency
-- Add integration tests against a test database
-- Add centralized error handling
-- Add API documentation
-- Add rate limiting and security hardening
+- add integration tests against a real test database and Redis
+- add OpenAPI documentation with example requests and responses
+- add healthcheck and readiness endpoints
+- add stronger security hardening and rate limiting
+- add deployment notes for production infrastructure

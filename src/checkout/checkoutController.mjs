@@ -1,4 +1,4 @@
-import * as checkoutServices from '../services/checkoutServices.mjs';
+import * as checkoutServices from './checkoutServices.mjs';
 import { z } from 'zod';
 import { razorpayInstance } from '../config/razorpay.mjs';
 
@@ -27,24 +27,24 @@ export const digitalCheckout = async (request, response) => {
     return response.status(400).json({ success: false, error: result.error });
   }
   const { data, total } = body;
-  // const qrcode = await instance.qrCode.create({
-  //   type: 'upi_qr',
-  //   name: 'Store_1',
-  //   usage: 'single_use',
-  //   fixed_amount: true,
-  //   payment_amount: total * 100,
-  //   description: 'For Store 1',
-  //   notes: {
-  //     purpose: 'Test UPI QR code notes',
-  //   },
-  // });
+  const qrcode = await razorpayInstance.qrCode.create({
+    type: 'upi_qr',
+    name: 'Store_1',
+    usage: 'single_use',
+    fixed_amount: true,
+    payment_amount: total * 100,
+    description: 'For Store 1',
+    notes: {
+      purpose: 'Test UPI QR code notes',
+    },
+  });
   // console.log(qrcode);
 
-  const qrcode = await razorpayInstance.orders.create({
-    amount: total * 100,
-    currency: 'INR',
-    receipt: 'receipt#1',
-  });
+  // const qrcode = await razorpayInstance.orders.create({
+  //   amount: total * 100,
+  //   currency: 'INR',
+  //   receipt: 'receipt#1',
+  // });
   await checkoutServices.digitalCheckout(data, total, qrcode, user);
   return response.status(200).json({ success: true, qrcode });
 };

@@ -12,15 +12,11 @@ export const queue = new Queue('jobs', {
 });
 
 export const registerRecurringJobs = async () => {
-  if (process.env.ENABLE_REPORT_JOB !== 'true') {
-    return;
-  }
-
   await queue.add(
     'report',
     {},
     {
-      jobId: 'report-monthly',
+      jobId: `report-monthly ${new Date(new Date().getFullYear(), new Date().getMonth() - 1, 1).toISOString()}`,
       repeat: {
         pattern: '30 1 1 * *',
       },

@@ -1,4 +1,4 @@
-import * as analyticsServices from '../services/analyticsServices.mjs';
+import * as analyticsServices from './analyticsServices.mjs';
 import { z } from 'zod';
 
 const getRecentTransactionsSchema = z.object({
@@ -38,9 +38,7 @@ export const getGraphData = async (request, response) => {
     analyticsServices.getMonthlySales(result.data.limit),
     analyticsServices.getDailySales(),
   ]);
-  return response
-    .status(200)
-    .json({ success: true, monthlySales, todaySales });
+  return response.status(200).json({ success: true, monthlySales, todaySales });
 };
 
 export const getCategories = async (request, response) => {
@@ -64,4 +62,9 @@ export const getCategoryWiseSales = async (request, response) => {
   return response
     .status(200)
     .json({ success: true, categoryMonthlySales, categoryTodaySales });
+};
+
+export const getReport = async (request, response) => {
+  await analyticsServices.getReport();
+  return response.status(200).json({ success: true });
 };

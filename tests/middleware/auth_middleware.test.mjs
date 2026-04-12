@@ -26,7 +26,7 @@ vi.mock('jsonwebtoken', () => ({
   default: mockState.jwt,
 }));
 
-vi.mock('../../src/models/authModels.mjs', () => ({
+vi.mock('../../src/auth/authModels.mjs', () => ({
   User: mockState.User,
   UserToken: mockState.UserToken,
 }));

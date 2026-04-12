@@ -21,7 +21,7 @@ const dbMocks = vi.hoisted(() => ({
   },
 }));
 
-vi.mock('../../src/models/analyticsModels.mjs', () => ({
+vi.mock('../../src/analytics/analyticsModels.mjs', () => ({
   Transactions: dbMocks.Transactions,
   MonthlySales: dbMocks.MonthlySales,
   DailySales: dbMocks.DailySales,
@@ -31,7 +31,7 @@ vi.mock('../../src/models/analyticsModels.mjs', () => ({
 }));
 
 const analyticsServices =
-  await import('../../src/services/analyticsServices.mjs');
+  await import('../../src/analytics/analyticsServices.mjs');
 
 describe('analyticsServices', () => {
   beforeEach(() => {

@@ -24,14 +24,14 @@ const mockState = vi.hoisted(() => ({
   }),
 }));
 
-vi.mock('../../src/models/checkoutModels.mjs', () => ({
+vi.mock('../../src/checkout/checkoutModels.mjs', () => ({
   IndividualItemTransactions: {
     insertMany: mockState.insertMany,
     updateMany: mockState.individualItemTransactionsUpdateMany,
   },
 }));
 
-vi.mock('../../src/models/inventoryModels.mjs', () => ({
+vi.mock('../../src/inventory/inventoryModels.mjs', () => ({
   ItemsWithExpire: {
     bulkWrite: mockState.itemsWithExpireBulkWrite,
     updateOne: mockState.itemsWithExpireUpdateOne,
@@ -42,7 +42,7 @@ vi.mock('../../src/models/inventoryModels.mjs', () => ({
   },
 }));
 
-vi.mock('../../src/models/analyticsModels.mjs', () => ({
+vi.mock('../../src/analytics/analyticsModels.mjs', () => ({
   CategoryWiseMonthlySales: {
     bulkWrite: mockState.categoryWiseMonthlySalesBulkWrite,
   },
@@ -62,7 +62,7 @@ vi.mock('../../src/models/analyticsModels.mjs', () => ({
   Categories: mockState.Categories,
 }));
 
-vi.mock('../../src/models/authModels.mjs', () => ({
+vi.mock('../../src/auth/authModels.mjs', () => ({
   DeviceToken: {
     find: vi.fn(),
   },
@@ -76,7 +76,7 @@ vi.mock('../../src/config/firebase.mjs', () => ({
   getFirebaseAdmin: vi.fn(),
 }));
 
-const jobServices = await import('../../src/workers/jobServices.mjs');
+const jobServices = await import('../../src/workers/jobServices.update.mjs');
 
 describe('jobServices update', () => {
   beforeEach(() => {
@@ -103,7 +103,9 @@ describe('jobServices update', () => {
 
   it('updateItemsWithExpire decrements matching expire batches', async () => {
     const session = { id: 's1' };
-    const data = [{ name: 'milk', price: 30, expire: '2026-03-30', quantity: 2 }];
+    const data = [
+      { name: 'milk', price: 30, expire: '2026-03-30', quantity: 2 },
+    ];
 
     await jobServices.updateItemsWithExpire(data, session);
 
@@ -143,7 +145,11 @@ describe('jobServices update', () => {
     const session = { id: 's1' };
     const totals = [{ category: 'snacks', total: 120 }];
 
-    await jobServices.updateCategoryWiseMonthlySales(totals, '2026-03', session);
+    await jobServices.updateCategoryWiseMonthlySales(
+      totals,
+      '2026-03',
+      session,
+    );
 
     expect(mockState.categoryWiseMonthlySalesBulkWrite).toHaveBeenCalledWith(
       [
@@ -186,7 +192,11 @@ describe('jobServices update', () => {
       { name: 'chips', price: 20, category: 'snacks', quantity: 3 },
     ];
 
-    await jobServices.updateIndividualItemMonthlySales(data, '2026-03', session);
+    await jobServices.updateIndividualItemMonthlySales(
+      data,
+      '2026-03',
+      session,
+    );
 
     expect(mockState.individualItemMonthlySalesBulkWrite).toHaveBeenCalledWith(
       [

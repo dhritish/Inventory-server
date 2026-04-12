@@ -1,6 +1,6 @@
 import express from 'express';
 import { verifytoken_access } from '../middleware/auth_middleware.mjs';
-import * as inventoryController from '../controllers/inventoryController.mjs';
+import * as inventoryController from './inventoryController.mjs';
 
 const router = express.Router();
 

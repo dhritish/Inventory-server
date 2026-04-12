@@ -15,12 +15,12 @@ const embMock = vi.hoisted(() => ({
 vi.mock('../../src/workers/jobServices.mjs', () => embMock);
 
 vi.mock(
-  '../../src/services/inventoryServices.mjs',
+  '../../src/inventory/inventoryServices.mjs',
   () => inventoryServiceMocks,
 );
 
 const inventoryController =
-  await import('../../src/controllers/inventoryController.mjs');
+  await import('../../src/inventory/inventoryController.mjs');
 
 describe('inventoryController', () => {
   beforeEach(() => {
