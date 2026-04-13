@@ -19,7 +19,7 @@ const signinSchema = z.object({
   password: z.string().min(6),
 });
 
-const hashRefreshToken = token => {
+export const hashRefreshToken = token => {
   const cryptoSecret = process.env.CRYPTO_SECRET;
   if (!cryptoSecret) {
     throw new Error('CRYPTO_SECRET is required for refresh token hashing');

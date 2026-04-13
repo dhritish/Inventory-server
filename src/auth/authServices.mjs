@@ -6,7 +6,7 @@ import { queue } from '../queue.mjs';
 import * as authModels from './authModels.mjs';
 import crypto from 'crypto';
 
-const hashRefreshToken = token => {
+export const hashRefreshToken = token => {
   const cryptoSecret = process.env.CRYPTO_SECRET;
   if (!cryptoSecret) {
     throw new Error('CRYPTO_SECRET is required for refresh token hashing');
@@ -74,7 +74,7 @@ export const signout = token => {
 
 export const refresh = async (token, userId) => {
   const hashed_token = hashRefreshToken(token);
-  await authModels.UserToken.findOneAndUpdate(
+  await authModels.UserToken.updateOne(
     { token: hashed_token },
     { $set: { revoked: true } },
     { runValidators: true },

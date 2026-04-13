@@ -38,6 +38,7 @@ describe('auth_middleware', () => {
     vi.clearAllMocks();
     process.env.ACCESS_TOKEN_SECRET = 'access-secret';
     process.env.REFRESH_TOKEN_SECRET = 'refresh-secret';
+    process.env.CRYPTO_SECRET = 'crypto-secret';
     process.env.SALT_ROUND = '10';
   });
 
@@ -47,6 +48,7 @@ describe('auth_middleware', () => {
         username: 'leo',
         email: 'leo@example.com',
         password: 'password',
+        role: 'customer',
       },
     };
     const response = createResponse();
@@ -260,11 +262,12 @@ describe('auth_middleware', () => {
     const next = vi.fn();
 
     mockState.jwt.verify.mockReturnValue({ id: '123' });
+    const hashed_token = authMiddleware.hashRefreshToken('refresh-token');
     mockState.UserToken.findOne.mockResolvedValue({
-      token: 'refresh-token',
+      token: hashed_token,
       revoked: true,
+      expiresAt: new Date().setDate(new Date().getDate() + 1),
     });
-
     await authMiddleware.verifytoken_refresh(request, response, next);
 
     expect(request.token).toBe('refresh-token');
@@ -287,11 +290,12 @@ describe('auth_middleware', () => {
     const next = vi.fn();
 
     mockState.jwt.verify.mockReturnValue({ id: '123' });
+    const hashed_token = authMiddleware.hashRefreshToken('refresh-token');
     mockState.UserToken.findOne.mockResolvedValue({
-      token: 'refresh-token',
+      token: hashed_token,
       revoked: false,
+      expiresAt: new Date().setDate(new Date().getDate() + 1),
     });
-
     await authMiddleware.verifytoken_refresh(request, response, next);
 
     expect(mockState.jwt.verify).toHaveBeenCalledWith(
@@ -299,7 +303,7 @@ describe('auth_middleware', () => {
       'refresh-secret',
     );
     expect(mockState.UserToken.findOne).toHaveBeenCalledWith({
-      token: 'refresh-token',
+      token: hashed_token,
     });
     expect(request.token).toBe('refresh-token');
     expect(request.userId).toBe('123');
