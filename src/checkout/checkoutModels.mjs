@@ -41,6 +41,7 @@ const individualItemTransactions = new mongoose.Schema({
     required: true,
   },
 });
+individualItemTransactions.index({ status: 1, sold_date: 1 });
 
 export const IndividualItemTransactions = mongoose.model(
   'IndividualItemTransactions',

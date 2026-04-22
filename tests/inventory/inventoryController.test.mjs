@@ -12,7 +12,7 @@ const embMock = vi.hoisted(() => ({
   getEmbedding: vi.fn(),
 }));
 
-vi.mock('../../src/workers/jobServices.mjs', () => embMock);
+vi.mock('../../src/workers/inventory/jobServices.inventory.mjs', () => embMock);
 
 vi.mock(
   '../../src/inventory/inventoryServices.mjs',

@@ -1,6 +1,6 @@
 import * as inventoryServices from './inventoryServices.mjs';
 import { z } from 'zod';
-import { getEmbedding } from '../workers/jobServices.mjs';
+import { getEmbedding } from '../workers/inventory/jobServices.inventory.mjs';
 
 const addItemSchema = z.object({
   barcode: z.string().optional(),

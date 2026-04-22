@@ -106,10 +106,27 @@ export const verifytoken_access = (request, response, next) => {
     }
     const verified = jwt.verify(token, process.env.ACCESS_TOKEN_SECRET);
     request.user = verified.id;
+    request.role = verified.role;
     next();
   } catch (error) {
     return response.status(401).json({ success: false, error: error.name });
   }
+};
+
+export const authorization = role => {
+  return async (request, response, next) => {
+    try {
+      if (role.includes(request.role)) {
+        next();
+      } else {
+        return response
+          .status(401)
+          .json({ success: false, error: 'Unauthorized' });
+      }
+    } catch (error) {
+      return response.status(401).json({ success: false, error: error.name });
+    }
+  };
 };
 
 export const verifytoken_refresh = async (request, response, next) => {

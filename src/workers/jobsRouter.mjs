@@ -1,26 +1,32 @@
-import * as jobs from './jobs.mjs';
 import * as authJobs from './auth/jobs.auth.mjs';
+import * as inventoryJobs from './inventory/jobs.inventory.mjs';
+import * as analyticsJobs from './analytics/jobs.analytics.mjs';
+import * as checkoutJobs from './checkout/jobs.checkout.mjs';
 
 export const processJob = job => {
   switch (job.name) {
     case 'digital': {
-      return jobs.digitalCheckout(job.data.data);
+      return checkoutJobs.digitalCheckout(job.data.data);
     }
 
     case 'cash': {
-      return jobs.cashCheckout(job.data.data, job.data.total);
+      return checkoutJobs.cashCheckout(job.data.data, job.data.total);
     }
 
     case 'update_qr_id': {
-      return jobs.updateQrId(job.data.qr_id, job.data.status, job.data.total);
+      return checkoutJobs.updateQrId(
+        job.data.qr_id,
+        job.data.status,
+        job.data.total,
+      );
     }
 
     case 'additem': {
-      return jobs.addItem(job.data.body);
+      return inventoryJobs.addItem(job.data.body);
     }
 
     case 'send_notification': {
-      return jobs.sendNotification(
+      return checkoutJobs.sendNotification(
         job.data.qr_id,
         job.data.status,
         job.data.total,
@@ -28,7 +34,7 @@ export const processJob = job => {
     }
 
     case 'report': {
-      return jobs.report();
+      return analyticsJobs.report();
     }
 
     case 'signup': {

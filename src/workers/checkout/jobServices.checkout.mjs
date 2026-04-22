@@ -1,9 +1,7 @@
-import * as checkoutModels from '../checkout/checkoutModels.mjs';
-import * as inventoryModels from '../inventory/inventoryModels.mjs';
-import * as analyticsModels from '../analytics/analyticsModels.mjs';
-import * as authModels from '../auth/authModels.mjs';
-import { pipeline } from '@xenova/transformers';
-import { getFirebaseAdmin } from '../config/firebase.mjs';
+import * as checkoutModels from '../../checkout/checkoutModels.mjs';
+import * as inventoryModels from '../../inventory/inventoryModels.mjs';
+import * as analyticsModels from '../../analytics/analyticsModels.mjs';
+import { getFirebaseAdmin } from '../../config/firebase.mjs';
 
 export const addIndividualItemTransaction = (data, session) => {
   const docs = data.map(({ _id, ...itemdata }) => itemdata);
@@ -124,9 +122,19 @@ export const updateDailySales = (today, total, session) => {
   );
 };
 
-export const addCategory = (category, session) => {
-  const newCategory = new analyticsModels.Categories({ category });
-  return newCategory.save({ session });
+export const updateIndividualItemTransaction = (qr_id, status, session) => {
+  return checkoutModels.IndividualItemTransactions.updateMany(
+    { qr_id },
+    { $set: { status: status } },
+    { session },
+  );
+};
+
+export const getIndividualItemTransaction = (qr_id, session) => {
+  return checkoutModels.IndividualItemTransactions.find({ qr_id })
+    .session(session)
+    .select('name price quantity expire sold_date category -_id')
+    .lean();
 };
 
 export const getUserFromIndividualItemTransaction = qr_id => {
@@ -167,76 +175,4 @@ export const sendNotification = async (qr_id, status, total) => {
     },
   };
   return await admin.messaging().sendEachForMulticast(message);
-};
-
-export const getIndividualItemTransaction = (qr_id, session) => {
-  return checkoutModels.IndividualItemTransactions.find({ qr_id })
-    .session(session)
-    .select('name price quantity expire sold_date category -_id')
-    .lean();
-};
-
-export const updateIndividualItemTransaction = (qr_id, status, session) => {
-  return checkoutModels.IndividualItemTransactions.updateMany(
-    { qr_id },
-    { $set: { status: status } },
-    { session },
-  );
-};
-
-export const addTotalOfItems = (data, session) => {
-  return inventoryModels.TotalOfItems.updateOne(
-    {
-      barcode: data.barcode,
-      name: data.name,
-      price: data.price,
-      embedding: data.embedding,
-      category: data.category,
-    },
-    { $inc: { quantity: data.quantity } },
-    { upsert: true, session },
-  );
-};
-
-export const addItemsWithExpire = (data, session) => {
-  return inventoryModels.ItemsWithExpire.updateOne(
-    {
-      barcode: data.barcode,
-      name: data.name,
-      price: data.price,
-      expire: data.expire,
-      embedding: data.embedding,
-      category: data.category,
-    },
-    { $inc: { quantity: data.quantity } },
-    { upsert: true, session },
-  );
-};
-
-export const getEmbedding = async name => {
-  const embedder = await pipeline(
-    'feature-extraction',
-    'Xenova/all-MiniLM-L6-v2',
-  );
-  return await embedder(name, {
-    pooling: 'mean',
-    normalize: true,
-  });
-};
-
-export const getCategoryString = async () => {
-  const categories = await analyticsModels.Categories.find()
-    .select('category -_id')
-    .lean();
-  const arr = categories.map(category => category.category);
-  return arr.join(', ');
-};
-
-export const getCategoryEmbeddingOfItem = (data, session) => {
-  return inventoryModels.TotalOfItems.findOne({
-    name: data.name,
-  })
-    .session(session)
-    .select('category embedding -_id')
-    .lean();
 };

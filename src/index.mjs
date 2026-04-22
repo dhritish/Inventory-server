@@ -4,6 +4,7 @@ import authRoutes from './auth/authRoutes.mjs';
 import inventoryRoutes from './inventory/inventoryRoutes.mjs';
 import analyticsRoutes from './analytics/analyticsRoutes.mjs';
 import checkoutRoutes from './checkout/checkoutRoutes.mjs';
+import suggestionRoutes from './suggestion/suggestionRoutes.mjs';
 import mongoose from 'mongoose';
 import cookieParser from 'cookie-parser';
 import webhooksRouter from './checkout/webhooks.mjs';
@@ -23,7 +24,7 @@ import cors from 'cors';
 
 app.use(
   cors({
-    origin: 'http://localhost:5173',
+    origin: process.env.F_URL,
     methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
     allowedHeaders: ['Content-Type', 'Authorization', 'Client-Type'],
     credentials: true,
@@ -34,6 +35,7 @@ app.use('/auth', authRoutes);
 app.use('/inventory', inventoryRoutes);
 app.use('/analytics', analyticsRoutes);
 app.use('/checkout', checkoutRoutes);
+app.use('/suggestion', suggestionRoutes);
 app.use(errorHandler);
 
 export { app };
