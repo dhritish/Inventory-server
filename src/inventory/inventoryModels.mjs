@@ -62,6 +62,10 @@ const totalOfItems = new mongoose.Schema({
     type: [Number],
     default: null,
   },
+  url: {
+    type: mongoose.Schema.Types.String,
+    default: null,
+  },
 });
 totalOfItems.index({ name: 1, price: 1 });
 totalOfItems.index({ barcode: 1 });

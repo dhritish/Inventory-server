@@ -54,10 +54,47 @@ describe('suggestion services', () => {
         $limit: 10,
       },
       {
+        $lookup: {
+          from: 'totalofitems',
+          let: {
+            name: '$_id.name',
+            price: '$_id.price',
+          },
+          pipeline: [
+            {
+              $match: {
+                $expr: {
+                  $and: [
+                    { $eq: ['$name', '$$name'] },
+                    { $eq: ['$price', '$$price'] },
+                  ],
+                },
+              },
+            },
+            {
+              $project: {
+                _id: 1,
+                quantity: 1,
+                url: 1,
+              },
+            },
+          ],
+          as: 'product',
+        },
+      },
+      {
+        $unwind: {
+          path: '$product',
+          preserveNullAndEmptyArrays: true,
+        },
+      },
+      {
         $project: {
-          _id: 0,
           name: '$_id.name',
           price: '$_id.price',
+          url: '$product.url',
+          stock: '$product.quantity',
+          _id: '$product._id',
           total: 1,
         },
       },

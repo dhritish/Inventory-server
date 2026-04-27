@@ -2,6 +2,7 @@ import * as authJobs from './auth/jobs.auth.mjs';
 import * as inventoryJobs from './inventory/jobs.inventory.mjs';
 import * as analyticsJobs from './analytics/jobs.analytics.mjs';
 import * as checkoutJobs from './checkout/jobs.checkout.mjs';
+import * as cartJobs from './cart/jobs.cart.mjs';
 
 export const processJob = job => {
   switch (job.name) {
@@ -39,6 +40,18 @@ export const processJob = job => {
 
     case 'signup': {
       return authJobs.signup(job.data.body);
+    }
+
+    case 'addToCart': {
+      return cartJobs.addToCart(job.data);
+    }
+
+    case 'removeFromCart': {
+      return cartJobs.removeFromCart(job.data);
+    }
+
+    case 'decreaseFromCart': {
+      return cartJobs.decreaseFromCart(job.data);
     }
 
     default:
