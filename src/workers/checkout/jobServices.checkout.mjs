@@ -2,6 +2,8 @@ import * as checkoutModels from '../../checkout/checkoutModels.mjs';
 import * as inventoryModels from '../../inventory/inventoryModels.mjs';
 import * as analyticsModels from '../../analytics/analyticsModels.mjs';
 import { getFirebaseAdmin } from '../../config/firebase.mjs';
+import mongoose from 'mongoose';
+import { Cart } from '../../cart/cartModels.mjs';
 
 export const addIndividualItemTransaction = (data, session) => {
   const docs = data.map(({ _id, ...itemdata }) => itemdata);
@@ -175,4 +177,44 @@ export const sendNotification = async (qr_id, status, total) => {
     },
   };
   return await admin.messaging().sendEachForMulticast(message);
+};
+
+export const updateOrder = (orderId, status, session) => {
+  return checkoutModels.Order.findOneAndUpdate(
+    { orderId },
+    { $set: { payment: status } },
+    { new: true, session },
+  )
+    .select('user items -_id ')
+    .lean();
+};
+
+export const clearCart = (userId, session) => {
+  return Cart.updateOne(
+    { userId: new mongoose.Types.ObjectId(userId) },
+    { $set: { items: [], updatedAt: new Date() } },
+    { session },
+  );
+};
+
+export const getOrder = (orderId, session) => {
+  return checkoutModels.Order.findOne({ orderId })
+    .session(session)
+    .select('items user payment -_id')
+    .lean();
+};
+
+export const addTotalOfItems = (items, session) => {
+  return inventoryModels.TotalOfItems.bulkWrite(
+    items.map(item => ({
+      updateOne: {
+        filter: {
+          name: item.name,
+          price: item.price,
+        },
+        update: { $inc: { quantity: item.quantity } },
+      },
+    })),
+    { session },
+  );
 };

@@ -20,4 +20,18 @@ router.post(
   checkoutController.cashCheckout,
 );
 
+router.post(
+  '/payOnDelivery',
+  verifytoken_access,
+  authorization(['employee', 'owner', 'customer']),
+  checkoutController.payOnDelivery,
+);
+
+router.post(
+  '/prePayment',
+  verifytoken_access,
+  authorization(['employee', 'owner', 'customer']),
+  checkoutController.prePayment,
+);
+
 export default router;

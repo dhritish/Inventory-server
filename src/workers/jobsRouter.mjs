@@ -22,6 +22,14 @@ export const processJob = job => {
       );
     }
 
+    case 'update-order': {
+      return checkoutJobs.updateOrder(job.data.orderId, job.data.status);
+    }
+
+    case 'revertIfUnpaid': {
+      return checkoutJobs.revertIfUnpaid(job.data.orderId);
+    }
+
     case 'additem': {
       return inventoryJobs.addItem(job.data.body);
     }

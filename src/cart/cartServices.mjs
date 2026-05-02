@@ -38,7 +38,6 @@ export function getCart(userId) {
     {
       $unwind: {
         path: '$items',
-        preserveNullAndEmptyArrays: true,
       },
     },
     {
@@ -59,7 +58,6 @@ export function getCart(userId) {
     {
       $unwind: {
         path: '$product',
-        preserveNullAndEmptyArrays: true,
       },
     },
     {

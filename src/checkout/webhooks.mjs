@@ -17,38 +17,52 @@ router.post(
       .digest('hex');
     if (signaturerecieved === realsignature) {
       const payload = JSON.parse(body.toString('utf8'));
-      const order_id = payload.payload.payment.entity.order_id;
+      const payment = payload.payload.payment.entity;
 
-      await queue.add(
-        'update_qr_id',
-        {
-          qr_id: order_id,
-          status: payload.payload.payment.entity.captured
-            ? 'success'
-            : 'failed',
-          total: payload.payload.payment.entity.amount / 100,
-        },
-        {
-          jobId: `update_qr_id-${order_id}`,
-          attempts: 5,
-          backoff: { type: 'exponential', delay: 5000 },
-        },
-      );
-      await queue.add(
-        'send_notification',
-        {
-          qr_id: order_id,
-          status: payload.payload.payment.entity.captured
-            ? 'success'
-            : 'failed',
-          total: payload.payload.payment.entity.amount / 100,
-        },
-        {
-          jobId: `send_notification-${order_id}`,
-          attempts: 5,
-          backoff: { type: 'exponential', delay: 5000 },
-        },
-      );
+      if (payment?.order_id?.startsWith('order_')) {
+        await queue.add(
+          'update-order',
+          {
+            orderId: payment.order_id,
+            status: payment.captured ? 'paid' : 'failed',
+            total: payment.amount / 100,
+          },
+          {
+            jobId: `update-order-${payment.order_id}`,
+            attempts: 5,
+            backoff: { type: 'exponential', delay: 5000 },
+          },
+        );
+      } else if (payment?.order_id?.startsWith('qr_')) {
+        await queue.add(
+          'update_qr_id',
+          {
+            qr_id: payment.order_id,
+            status: payment.captured ? 'success' : 'failed',
+            total: payment.amount / 100,
+          },
+          {
+            jobId: `update_qr_id-${payment.order_id}`,
+            attempts: 5,
+            backoff: { type: 'exponential', delay: 5000 },
+          },
+        );
+
+        await queue.add(
+          'send_notification',
+          {
+            qr_id: payment.order_id,
+            status: payment.captured ? 'success' : 'failed',
+            total: payment.amount / 100,
+          },
+          {
+            jobId: `send_notification-${payment.order_id}`,
+            attempts: 5,
+            backoff: { type: 'exponential', delay: 5000 },
+          },
+        );
+      }
+
       response.status(200).json({ success: true });
     } else {
       response.status(400).json({ success: false });

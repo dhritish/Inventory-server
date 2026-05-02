@@ -121,3 +121,52 @@ export const updateQrId = async (qr_id, status, total) => {
 export const sendNotification = async (qr_id, status, total) => {
   await checkoutJobServices.sendNotification(qr_id, status, total);
 };
+
+export const updateOrder = async (orderId, status) => {
+  const session = await mongoose.startSession();
+  try {
+    await session.startTransaction();
+    const order = await checkoutJobServices.updateOrder(
+      orderId,
+      status,
+      session,
+    );
+    if (!order) {
+      await session.abortTransaction();
+      return;
+    }
+    if (status === 'paid') {
+      await checkoutJobServices.clearCart(order.user, session);
+    } else {
+      await checkoutJobServices.addTotalOfItems(order.items, session);
+    }
+    await session.commitTransaction();
+  } catch (error) {
+    await session.abortTransaction();
+    throw error;
+  } finally {
+    await session.endSession();
+  }
+};
+
+export const revertIfUnpaid = async orderId => {
+  const session = await mongoose.startSession();
+  try {
+    await session.startTransaction();
+    const order = await checkoutJobServices.getOrder(orderId, session);
+    if (!order) {
+      await session.abortTransaction();
+      return;
+    }
+    if (order.payment === 'pending') {
+      await checkoutJobServices.updateOrder(orderId, 'expired', session);
+      await checkoutJobServices.addTotalOfItems(order.items, session);
+    }
+    await session.commitTransaction();
+  } catch (error) {
+    await session.abortTransaction();
+    throw error;
+  } finally {
+    await session.endSession();
+  }
+};
