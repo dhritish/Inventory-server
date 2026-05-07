@@ -105,3 +105,9 @@ export const postDeviceToken = (deviceToken, user) => {
     { upsert: true },
   );
 };
+
+export const getProfile = user => {
+  return authModels.User.findById(user)
+    .select('username email role -_id')
+    .lean();
+};

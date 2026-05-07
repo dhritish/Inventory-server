@@ -74,12 +74,13 @@ const order = new mongoose.Schema({
     type: mongoose.Schema.Types.Number,
     required: true,
   },
-  packed: {
-    type: Boolean,
-    default: false,
+  status: {
+    type: mongoose.Schema.Types.String,
+    enum: ['pending', 'packed', 'out for delivery', 'delivered', 'cancelled'],
+    default: 'pending',
   },
-  delivered: {
-    type: Boolean,
+  isDelivered: {
+    type: mongoose.Schema.Types.Boolean,
     default: false,
   },
   payment: {
@@ -91,11 +92,26 @@ const order = new mongoose.Schema({
     type: mongoose.Schema.Types.String,
     default: null,
   },
+  agentId: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'User',
+    default: null,
+  },
   location: {
     type: [Number, Number],
     required: true,
   },
+  createdAt: {
+    type: mongoose.Schema.Types.Date,
+    default: Date.now,
+  },
+  modifiedAt: {
+    type: mongoose.Schema.Types.Date,
+    default: Date.now,
+  },
 });
+order.index({ user: 1, isDelivered: 1 });
+order.index({ status: 1, agentId: 1 });
 
 export const Order = mongoose.model('Order', order);
 export const IndividualItemTransactions = mongoose.model(

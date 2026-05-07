@@ -11,6 +11,8 @@ import cookieParser from 'cookie-parser';
 import webhooksRouter from './checkout/webhooks.mjs';
 import { fileURLToPath } from 'url';
 import { errorHandler } from './middleware/errorHandler.mjs';
+import orderRoutes from './orders/orderRoutes.mjs';
+import cors from 'cors';
 
 const PORT = Number(process.env.PORT) || 5000;
 const app = express();
@@ -20,8 +22,6 @@ app.use('/razor', webhooksRouter);
 
 app.use(express.json());
 app.use(cookieParser());
-
-import cors from 'cors';
 
 app.use(
   cors({
@@ -38,6 +38,7 @@ app.use('/analytics', analyticsRoutes);
 app.use('/checkout', checkoutRoutes);
 app.use('/suggestion', suggestionRoutes);
 app.use('/cart', cartRoutes);
+app.use('/order', orderRoutes);
 app.use(errorHandler);
 
 export { app };

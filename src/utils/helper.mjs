@@ -36,3 +36,10 @@ export const getCategoryWiseTotal = data => {
   }
   return categoryWiseTotal;
 };
+
+export class AppError extends Error {
+  constructor(message, statusCode) {
+    super(message);
+    this.statusCode = statusCode;
+  }
+}

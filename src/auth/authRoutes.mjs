@@ -19,5 +19,6 @@ router.post(
   verifytoken_access,
   authController.postDeviceToken,
 );
+router.get('/profile', verifytoken_access, authController.getProfile);
 
 export default router;

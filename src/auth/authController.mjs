@@ -127,3 +127,9 @@ export const postDeviceToken = async (request, response) => {
   await authServices.postDeviceToken(deviceToken, user);
   return response.status(200).json({ success: true });
 };
+
+export const getProfile = async (request, response) => {
+  const user = request.user;
+  const profile = await authServices.getProfile(user);
+  return response.status(200).json({ success: true, profile });
+};

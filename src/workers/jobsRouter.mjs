@@ -3,6 +3,7 @@ import * as inventoryJobs from './inventory/jobs.inventory.mjs';
 import * as analyticsJobs from './analytics/jobs.analytics.mjs';
 import * as checkoutJobs from './checkout/jobs.checkout.mjs';
 import * as cartJobs from './cart/jobs.cart.mjs';
+import * as orderJobs from './orders/jobs.orders.mjs';
 
 export const processJob = job => {
   switch (job.name) {
@@ -60,6 +61,22 @@ export const processJob = job => {
 
     case 'decreaseFromCart': {
       return cartJobs.decreaseFromCart(job.data);
+    }
+
+    case 'updateManyOrder': {
+      return orderJobs.updateManyOrder(job.data._ids, job.data.status);
+    }
+
+    case 'updateOrderToOFD': {
+      return orderJobs.updateOrderToOFD(
+        job.data._id,
+        job.data.status,
+        job.data.user,
+        job.data.location,
+        job.data.totalPrice,
+        job.data.totalItems,
+        job.data.payment,
+      );
     }
 
     default:
